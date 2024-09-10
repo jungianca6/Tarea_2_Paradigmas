@@ -3,31 +3,44 @@
 
 
 ;----------------------------## Función que busca la solución general ##----------------------------
+; Función principal que verifica filas, columnas y diagonales
+(define (get_solution matrix)
+  (or (check-rows matrix) ; Verifica filas
+      (check-columns matrix) ; Verifica columnas
+      (check-diagonals matrix))) ; Verifica diagonales
+
+
+; Función que verifica si hay un ganador en alguna columna
+(define (check-columns matrix)
+  (check-all-columns (buscar_ganador_columna matrix)))
+
+; Verifica si hay un ganador en alguna columna
+(define (check-all-columns cols)
+  (if (null? cols)
+      #f ; Si no hay más columnas, no se ha encontrado un ganador
+      (if (buscar-ganador-fila (car cols))
+          #t ; Si se encuentra un ganador en la columna actual, devuelve #t
+          (check-all-columns (cdr cols))))) ; Recurre a las siguientes columnas
+
+
 
 ; Función que recorre cada fila de la matriz y devuelve si hay un ganador en alguna fila
-; o en alguna columna.
-(define (recorrer-filas matrix)
-  ; Verifica si hay un ganador en alguna fila
-  (define (check-rows matrix)
-    (cond ((null? matrix) #f) ; Si no hay más filas, no se ha encontrado un ganador
-          ((buscar-ganador-fila (car matrix)) ; Recorre la primera fila
-           #t) ; Si se encuentra un ganador en la primera fila, devuelve #t
-          (else
-           (check-rows (cdr matrix))))) ; Recurre a las siguientes filas
+(define (check-rows matrix)
+  (cond ((null? matrix) #f) ; Si no hay más filas, no se ha encontrado un ganador
+        ((buscar-ganador-fila (car matrix)) ; Recorre la primera fila
+         #t) ; Si se encuentra un ganador en la primera fila, devuelve #t
+        (else
+         (check-rows (cdr matrix))))) ; Recurre a las siguientes filas
 
-  ; Verifica si hay un ganador en alguna columna
-  (define (check-columns matrix)
-    (let ([columns (buscar_ganador_columna matrix)])
-      (define (check-all-columns cols)
-        (if (null? cols)
-            #f ; Si no hay más columnas, no se ha encontrado un ganador
-            (if (buscar-ganador-fila (car cols))
-                #t ; Si se encuentra un ganador en la columna actual, devuelve #t
-                (check-all-columns (cdr cols))))) ; Recurre a las siguientes columnas
-      (check-all-columns columns)))
+; Función que verifica si hay un ganador en alguna diagonal
+(define (check-diagonals matrix)
+  (let ((descendentes (diagonales-descendentes matrix))
+        (ascendentes (diagonales-ascendentes matrix)))
+    (or (check-all-columns descendentes) ; Verifica diagonales descendentes
+        (check-all-columns ascendentes)))) ; Verifica diagonales ascendentes
 
-  ; Verifica filas y columnas
-  (or (check-rows matrix) (check-columns matrix)))
+
+
 
 ;----------------------------## Función que busca la solución como una fila ##----------------------------
 ; Función auxiliar que busca una secuencia ganadora en una fila
@@ -78,17 +91,72 @@
   ; Llama a la función auxiliar con el índice de columna inicial 0
   (extract-all-columns matrix 0 '()))
 
+;----------------------------## Funciones para obtener las diagonales ##----------------------------
+
+; Función que obtiene las diagonales de esquina superior izquierda a esquina inferior derecha
+(define (diagonales-descendentes matrix)
+  (define (extraer-diagonal matrix start-row start-col)
+    (define (extraer fila col acc)
+      (cond
+        ((or (>= fila (length matrix)) (>= col (length (car matrix)))) (reverse acc))
+        (else (extraer (+ fila 1) (+ col 1) (cons (list-ref (list-ref matrix fila) col) acc)))))
+    (extraer start-row start-col '()))
+  
+  (define (diagonales-desde-fila matrix fila)
+    (if (>= fila (length matrix))
+        '()
+        (cons (extraer-diagonal matrix fila 0)
+              (diagonales-desde-fila matrix (+ fila 1)))))
+  
+  (define (diagonales-desde-columna matrix columna)
+    (if (>= columna (length (car matrix)))
+        '()
+        (cons (extraer-diagonal matrix 0 columna)
+              (diagonales-desde-columna matrix (+ columna 1)))))
+  
+  (append (diagonales-desde-fila matrix 0)
+          (diagonales-desde-columna matrix 1)))
+
+
+;----------------------------## Función que obtiene las diagonales de esquina superior derecha a esquina inferior izquierda ##----------------------------
+
+(define (diagonales-ascendentes matrix)
+  (define (extraer-diagonal matrix start-row start-col)
+    (define (extraer fila col acc)
+      (cond
+        ((< fila 0) (reverse acc))
+        ((>= col (length (car matrix))) (reverse acc))
+        (else (extraer (- fila 1) (+ col 1) (cons (list-ref (list-ref matrix fila) col) acc)))))
+    (extraer start-row start-col '()))
+  
+  (define (diagonales-desde-fila matrix fila)
+    (if (< fila 0)
+        '()
+        (cons (extraer-diagonal matrix fila 0)
+              (diagonales-desde-fila matrix (- fila 1)))))
+  
+  (define (diagonales-desde-columna matrix columna)
+    (if (>= columna (length (car matrix)))
+        '()
+        (cons (extraer-diagonal matrix (sub1 (length matrix)) columna)
+              (diagonales-desde-columna matrix (+ columna 1)))))
+  
+  (append (diagonales-desde-fila matrix (- (length matrix) 1))
+          (diagonales-desde-columna matrix 0)))
 
 
 ;---------------------------------------------Pruebas-----------------------------------------------
 ; Definición de la matriz de prueba
-(define test-matrix '((1 0 1)
-                      (0 0 1)
-                      (1 0 1)))
+(define test-matrix '((1 1 0 1 0 1)
+                      (0 0 0 0 1 0)
+                      (0 0 1 1 0 0)
+                      (0 0 0 0 0 0)
+                      (0 0 1 0 1 0)
+                      (0 0 1 1 0 0)))
 
 ; Ejecución de la prueba
 (display "Resultado de recorrer-filas para test-matrix: ")
-(display (recorrer-filas test-matrix))
+(display (get_solution test-matrix))
 (newline)
 
 ; Definición de una matriz sin ganador
@@ -98,5 +166,5 @@
 
 ; Ejecución de la prueba sin ganador
 (display "Resultado de recorrer-filas para no-winner-matrix: ")
-(display (recorrer-filas no-winner-matrix))
+(display (get_solution no-winner-matrix))
 (newline)
