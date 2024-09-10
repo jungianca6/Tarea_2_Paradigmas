@@ -2,7 +2,10 @@
 
 
 
+
+
 ;----------------------------## Función que busca la solución general ##----------------------------
+
 ; Función principal que verifica filas, columnas y diagonales
 (define (get_solution matrix)
   (or (check-rows matrix) ; Verifica filas
@@ -14,52 +17,64 @@
 (define (check-columns matrix)
   (check-all-columns (buscar_ganador_columna matrix)))
 
+
 ; Verifica si hay un ganador en alguna columna
 (define (check-all-columns cols)
   (if (null? cols)
       #f ; Si no hay más columnas, no se ha encontrado un ganador
-      (if (buscar-ganador-fila (car cols))
+      (if (get_winner_as_row (car cols))
           #t ; Si se encuentra un ganador en la columna actual, devuelve #t
           (check-all-columns (cdr cols))))) ; Recurre a las siguientes columnas
-
 
 
 ; Función que recorre cada fila de la matriz y devuelve si hay un ganador en alguna fila
 (define (check-rows matrix)
   (cond ((null? matrix) #f) ; Si no hay más filas, no se ha encontrado un ganador
-        ((buscar-ganador-fila (car matrix)) ; Recorre la primera fila
+        ((get_winner_as_row (car matrix)) ; Recorre la primera fila
          #t) ; Si se encuentra un ganador en la primera fila, devuelve #t
         (else
          (check-rows (cdr matrix))))) ; Recurre a las siguientes filas
 
 ; Función que verifica si hay un ganador en alguna diagonal
 (define (check-diagonals matrix)
-  (let ((descendentes (diagonales-descendentes matrix))
-        (ascendentes (diagonales-ascendentes matrix)))
-    (or (check-all-columns descendentes) ; Verifica diagonales descendentes
-        (check-all-columns ascendentes)))) ; Verifica diagonales ascendentes
+  (let ((descendants (descending_diagonals matrix))
+        (ascending (ascending_diagonals matrix)))
+    (or (check-all-columns descendants) ; Verifica diagonales descendentes
+        (check-all-columns ascending)))) ; Verifica diagonales ascendentes
 
 
 
 
 ;----------------------------## Función que busca la solución como una fila ##----------------------------
-; Función auxiliar que busca una secuencia ganadora en una fila
-(define (buscar-secuencia fila ele counter)
-  (cond
-    ((null? fila) (>= counter 3)) ; Si se recorren todos los elementos, verifica el contador
-    ((zero? ele) (buscar-secuencia (cdr fila) (car fila) 1)) ; Reinicia el contador si el elemento es cero
-    ((= (car fila) ele)
-     (buscar-secuencia (cdr fila) ele (+ counter 1))) ; Aumenta el contador si el elemento es igual
-    (else
-     (buscar-secuencia (cdr fila) (car fila) 1)))) ; Reinicia el contador si el elemento no es igual
 
 ; Función que busca un ganador en una fila y devuelve #t o #f
-(define (buscar-ganador-fila fila)
+(define (get_winner_as_row fila)
+  
+  (display "Analyzing row: ") (display fila) (newline)
+  
   (if (null? fila)
       #f
-      (buscar-secuencia (cdr fila) (car fila) 1))) ; Llama a buscar-secuencia con el primer elemento como referencia
+      (search_secuence (cdr fila) (car fila) 1))) ; Llama a search_secuence con el primer elemento como referencia
+
+;; Función auxiliar que busca una secuencia ganadora en una fila
+(define (search_secuence fila ele counter)
+  (cond
+    ;; Caso base: si se recorren todos los elementos, verifica si el contador es al menos 3
+    ((null? fila) (>= counter 3)) ; Si se llega al final y el contador es 3 o más, devuelve #t
+    ;; Si el elemento actual es 0, reinicia el contador a 0 y continúa
+    ((zero? (car fila)) (search_secuence (cdr fila) ele 0))
+    ;; Si el elemento actual es igual al elemento a buscar
+    ((= (car fila) ele)
+     (if (>= (+ counter 1) 3)
+         #t ; Si se encuentra una secuencia de 3 o más, devuelve #t
+         (search_secuence (cdr fila) ele (+ counter 1)))) ; De lo contrario, continúa buscando
+    ;; Si el elemento actual es diferente al elemento a buscar, reinicia el contador a 1
+    (else (search_secuence (cdr fila) (car fila) 1))))
+
+
 
 ;----------------------------## Función que convierte las columnas en filas para buscar las soluciones ##----------------------------
+
 ; Función que obtiene los valores de una columna específica en una matriz.
 (define (get-column matrix col-index)
   ; Función auxiliar que recorre las filas de la matriz y extrae
@@ -93,66 +108,97 @@
 
 ;----------------------------## Funciones para obtener las diagonales ##----------------------------
 
-; Función que obtiene las diagonales de esquina superior izquierda a esquina inferior derecha
-(define (diagonales-descendentes matrix)
-  (define (extraer-diagonal matrix start-row start-col)
-    (define (extraer fila col acc)
+;; Function to obtain diagonals from the top-left corner to the bottom-right corner.
+(define (descending_diagonals matrix)
+  ;; Helper function to extract a diagonal starting from a specific position.
+  (define (extract_diagonal matrix start-row start-col)
+    ;; Recursive function to extract elements from the diagonal.
+    (define (extract row col acc)
       (cond
-        ((or (>= fila (length matrix)) (>= col (length (car matrix)))) (reverse acc))
-        (else (extraer (+ fila 1) (+ col 1) (cons (list-ref (list-ref matrix fila) col) acc)))))
-    (extraer start-row start-col '()))
+        ;; Caso base: si la fila o la columna están fuera de los límites de la matriz, retornar la lista acumulada en orden inverso.
+        ((or (>= row (length matrix)) (>= col (length (car matrix)))) (reverse acc))
+        ;; Caso recursivo: agregar el elemento actual a la acumulación y mover a la siguiente posición diagonal.
+        (else (extract (+ row 1) (+ col 1) (cons (list-ref (list-ref matrix row) col) acc)))))
+    ;; Llamar a la función recursiva comenzando desde la fila y columna iniciales con una lista acumulativa vacía.
+    (extract start-row start-col '()))
   
-  (define (diagonales-desde-fila matrix fila)
-    (if (>= fila (length matrix))
+  ;; Function to get all diagonals starting from a specific row.
+  (define (diagonals-from-row matrix row)
+    (if (>= row (length matrix))
+        ;; Caso base: si la fila está fuera de los límites (mayor o igual que el número de filas), retornar una lista vacía.
         '()
-        (cons (extraer-diagonal matrix fila 0)
-              (diagonales-desde-fila matrix (+ fila 1)))))
+        ;; Caso recursivo: obtener la diagonal desde la fila actual y continuar con la siguiente fila.
+        (cons (extract_diagonal matrix row 0)
+              (diagonals-from-row matrix (+ row 1)))))
   
-  (define (diagonales-desde-columna matrix columna)
-    (if (>= columna (length (car matrix)))
+  ;; Function to get all diagonals starting from a specific column.
+  (define (diagonals-from-column matrix column)
+    (if (>= column (length (car matrix)))
+        ;; Caso base: si la columna está fuera de los límites (mayor o igual que el número de columnas), retornar una lista vacía.
         '()
-        (cons (extraer-diagonal matrix 0 columna)
-              (diagonales-desde-columna matrix (+ columna 1)))))
+        ;; Caso recursivo: obtener la diagonal desde la columna actual y continuar con la siguiente columna.
+        (cons (extract_diagonal matrix 0 column)
+              (diagonals-from-column matrix (+ column 1)))))
   
-  (append (diagonales-desde-fila matrix 0)
-          (diagonales-desde-columna matrix 1)))
+  ;; Append the diagonals obtained from rows and columns, starting from the first row and the second column.
+  (append (diagonals-from-row matrix 0)
+          (diagonals-from-column matrix 1)))
 
 
 ;----------------------------## Función que obtiene las diagonales de esquina superior derecha a esquina inferior izquierda ##----------------------------
 
-(define (diagonales-ascendentes matrix)
-  (define (extraer-diagonal matrix start-row start-col)
-    (define (extraer fila col acc)
+;; The main function to obtain ascending diagonals of a matrix.
+(define (ascending_diagonals matrix)
+  ;; Función auxiliar para extraer una diagonal ascendente comenzando desde una posición específica.
+  (define (extract_diagonal matrix start-row start-col)
+    ;; Función recursiva para extraer los elementos de la diagonal ascendente.
+    (define (extract row col acc)
       (cond
-        ((< fila 0) (reverse acc))
+        ;; Caso base: si la fila está fuera de los límites (menor que 0), retornar la lista acumulada en orden inverso.
+        ((< row 0) (reverse acc))
+        ;; Caso base: si la columna está fuera de los límites (mayor o igual que el número de columnas), retornar la lista acumulada en orden inverso.
         ((>= col (length (car matrix))) (reverse acc))
-        (else (extraer (- fila 1) (+ col 1) (cons (list-ref (list-ref matrix fila) col) acc)))))
-    (extraer start-row start-col '()))
+        ;; Caso recursivo: agregar el elemento actual a la acumulación y mover a la siguiente posición diagonal.
+        (else (extract (- row 1) (+ col 1) (cons (list-ref (list-ref matrix row) col) acc)))))
+    ;; Llamar a la función recursiva comenzando desde la fila y columna iniciales con una lista acumulativa vacía.
+    (extract start-row start-col '()))
   
-  (define (diagonales-desde-fila matrix fila)
-    (if (< fila 0)
+  ;; Función para obtener todas las diagonales ascendentes comenzando desde una fila específica.
+  (define (diagonals-from-row matrix row)
+    (if (< row 0)
+        ;; Caso base: si la fila está fuera de los límites (menor que 0), retornar una lista vacía.
         '()
-        (cons (extraer-diagonal matrix fila 0)
-              (diagonales-desde-fila matrix (- fila 1)))))
+        ;; Caso recursivo: obtener la diagonal desde la fila actual y continuar con la fila anterior.
+        (cons (extract_diagonal matrix row 0)
+              (diagonals-from-row matrix (- row 1)))))
   
-  (define (diagonales-desde-columna matrix columna)
-    (if (>= columna (length (car matrix)))
+  ;; Función para obtener todas las diagonales ascendentes comenzando desde una columna específica.
+  (define (diagonals-from-column matrix column)
+    (if (>= column (length (car matrix)))
+        ;; Caso base: si la columna está fuera de los límites (mayor o igual que el número de columnas), retornar una lista vacía.
         '()
-        (cons (extraer-diagonal matrix (sub1 (length matrix)) columna)
-              (diagonales-desde-columna matrix (+ columna 1)))))
+        ;; Caso recursivo: obtener la diagonal desde la columna actual y continuar con la siguiente columna.
+        (cons (extract_diagonal matrix (sub1 (length matrix)) column)
+              (diagonals-from-column matrix (+ column 1)))))
   
-  (append (diagonales-desde-fila matrix (- (length matrix) 1))
-          (diagonales-desde-columna matrix 0)))
+  ;; Unir las diagonales obtenidas desde las filas y columnas, comenzando desde la última fila y la primera columna.
+  (append (diagonals-from-row matrix (- (length matrix) 1))
+          (diagonals-from-column matrix 0)))
 
 
 ;---------------------------------------------Pruebas-----------------------------------------------
 ; Definición de la matriz de prueba
-(define test-matrix '((1 1 0 1 0 1)
-                      (0 0 0 0 1 0)
-                      (0 0 1 1 0 0)
-                      (0 0 0 0 0 0)
-                      (0 0 1 0 1 0)
-                      (0 0 1 1 0 0)))
+(define test-matrix '((0 0 0 0 0 0 0 0 0 0)
+                      (0 1 0 0 0 0 0 0 0 0)
+                      (0 0 2 0 0 0 0 0 0 0)
+                      (0 0 0 1 0 0 0 0 0 0)
+                      (0 0 0 0 0 0 0 0 0 0)
+                      (0 0 0 0 0 0 0 2 0 0)
+                      (0 0 0 0 0 0 0 2 0 0)
+                      (0 0 0 0 0 2 0 2 0 0)
+                      (0 0 0 0 0 0 1 1 0 0)
+                      (0 0 0 0 0 1 0 2 0 0)
+                      (0 0 0 0 0 0 0 0 0 0)))
 
 ; Ejecución de la prueba
 (display "Resultado de recorrer-filas para test-matrix: ")
@@ -160,9 +206,9 @@
 (newline)
 
 ; Definición de una matriz sin ganador
-(define no-winner-matrix '((0 1 0)
-                           (1 0 1)
-                           (0 1 0)))
+(define no-winner-matrix '((1 0 1)
+                           (1 0 0)
+                           (0 1 1)))
 
 ; Ejecución de la prueba sin ganador
 (display "Resultado de recorrer-filas para no-winner-matrix: ")
