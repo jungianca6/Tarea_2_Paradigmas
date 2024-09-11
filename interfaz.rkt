@@ -1,14 +1,14 @@
 #lang racket/gui
+
 (require racket/gui/base)
+(require "matriz.rkt")
 
 ; Crear la ventana de inicio y bienvenida
 (define Menu
   (new frame%
        [label "Inicio"]
-       [width 600]
-       [height 600]))
-
-
+       [width 1000]
+       [height 800]))
 
 ; Crear una caja para guardar la etiqueta de bienvenida
 (define box1
@@ -108,44 +108,46 @@
                          [font (make-object font% 14.0 'system)])))
   mensaje)
 
-; Función que se llama cuando se presiona el botón
+; Función que se llama cuando se presiona el botón (sin let ni set!)
 (define (llamadaBoton button event)
-  (let ((numColumnas (string->number (send entradaColumnas get-value)))
-        (numFilas (string->number (send entradaFilas get-value))))
-    
-    ; Actualizar mensaje de error para columnas
-    (set! mensaje-error-columnas
-      (cond
-        [(or (not numColumnas) (< numColumnas 3))
-         (actualizar-mensaje-error box-error-columnas mensaje-error-columnas 
-                                   "No se puede crear un tablero de menos de 3 columnas")]
-        [(> numColumnas 10)
-         (actualizar-mensaje-error box-error-columnas mensaje-error-columnas 
-                                   "No se puede crear un tablero de más de 10 columnas")]
-        [else 
-         (when mensaje-error-columnas
-           (send mensaje-error-columnas show #f))
-         #f]))
-    
-    ; Actualizar mensaje de error para filas
-    (set! mensaje-error-filas
-      (cond
-        [(or (not numFilas) (< numFilas 3))
-         (actualizar-mensaje-error box-error-filas mensaje-error-filas 
-                                   "No se puede crear un tablero de menos de 3 filas")]
-        [(> numFilas 10)
-         (actualizar-mensaje-error box-error-filas mensaje-error-filas 
-                                   "No se puede crear un tablero de más de 10 filas")]
-        [else 
-         (when mensaje-error-filas
-           (send mensaje-error-filas show #f))
-         #f]))
-    
-    ; Si no hay errores, llamar a Cuadricula
-    ;(when (and (not mensaje-error-columnas) (not mensaje-error-filas))
-      ;(displayln "Llamando a Cuadricula")
-      ;(Cuadricula numFilas numColumnas 1 1))
-    ))
+  ; Obtener valores de filas y columnas
+  (define numColumnas (string->number (send entradaColumnas get-value)))
+  (define numFilas (string->number (send entradaFilas get-value)))
+
+  ; Validación de columnas
+  (cond
+    [(or (not numColumnas) (< numColumnas 3))
+     (actualizar-mensaje-error box-error-columnas #f 
+                               "No se puede crear un tablero de menos de 3 columnas")]
+    [(> numColumnas 10)
+     (actualizar-mensaje-error box-error-columnas #f 
+                               "No se puede crear un tablero de más de 10 columnas")]
+    [else 
+     (when mensaje-error-columnas
+       (send mensaje-error-columnas show #f))])
+
+  ; Validación de filas
+  (cond
+    [(or (not numFilas) (< numFilas 3))
+     (actualizar-mensaje-error box-error-filas #f 
+                               "No se puede crear un tablero de menos de 3 filas")]
+    [(> numFilas 10)
+     (actualizar-mensaje-error box-error-filas #f 
+                               "No se puede crear un tablero de más de 10 filas")]
+    [else 
+     (when mensaje-error-filas
+       (send mensaje-error-filas show #f))])
+
+  ; Verificar si no hay errores
+  (cond
+    ((and (not (or (not numColumnas) (< numColumnas 3) (> numColumnas 10)))
+          (not (or (not numFilas) (< numFilas 3) (> numFilas 10))))
+     (displayln "Llamando a Cuadricula")
+     (print-matriz (matriz numFilas numColumnas))
+     (create-board-panel (matriz numFilas numColumnas))
+     (send Menu show #f)
+     (send Matriz show #t))))
+
 
 ;"""""""""""""""""""""""""""""""""""Botón para validar datos ingresados""""""""""""""""""""""
 ;Crea el botón check    
@@ -155,7 +157,77 @@
     [min-width 100]
     [font (make-object font% 20.0 'system)]
     [callback llamadaBoton])
+
+  
+;"""""""""""""""""""""""""""""""""""Matriz""""""""""""""""""""""
+
+;; Crea frame 2 del Juego
+(define Matriz (new frame%
+                    [label "Tic-Tac-Toe"]
+                    [width 100]
+                    [height 100]))
+
+;; Crea una caja para guardar el panel de botones
+(define box6 
+  (new horizontal-panel%
+       [parent Matriz]
+       [alignment '(center top)]))
+
+;; La matriz de botones
+(define buttons-panel 
+  '())
+
+;; Botones de la matrix de botones
+(define Button%
+  (class button%
+    (init-field [row 0] [col 0])
+    (super-new)
+    (define/public (get-row)
+      row)
+    (define/public (get-col)
+      col)))
+
+(define (create-board-panel board) ; Panel de la matriz
+  (define panel (new vertical-panel%
+                     [parent box6]
+                     [alignment '(center top)]
+                     [stretchable-width #f]))
+  
+  (define (create-row-panel i)   ; Cada fila
+    (define row-panel (new horizontal-panel%
+                           [parent panel]
+                           [alignment '(center top)]
+                           [stretchable-width #f]))
     
+    (define row-buttons '())
+    (define (create-button j)    ; Crear un botón dentro de la fila
+      (define b (new Button% [parent row-panel]
+                            [label " "]
+                            [callback button-grid-callback]
+                            [vert-margin 10]
+                            [horiz-margin 10]
+                            [min-width 50]
+                            [min-height 50]
+                            [row i]
+                            [col j]))
+      ; Añadir el botón a la lista de la fila
+      (set! row-buttons (append row-buttons (list b)))  
+      (cond 
+      ((< j (- (length (list-ref board i)) 1)) 
+             (create-button (+ j 1)))))
+    (create-button 0)
+    ; Añadir la fila a la matriz de botones
+    (set! buttons-panel (append buttons-panel (list row-buttons)))
+    (cond     ; Crear la siguiente fila si es necesario
+    ((< i (- (length board) 1))
+           (create-row-panel (+ i 1)))))
+  (create-row-panel 0)   ; Crear la primera fila
+  panel)
+
+
+(define (button-grid-callback b e)
+  (print 3)) 
+
 ; Centrar la ventana1
 (send Menu center)
 
