@@ -1,7 +1,7 @@
 #lang racket/gui
 
 (require racket/gui/base)
-(require "matriz.rkt")
+(require "Logica_interna.rkt")
 
 ; Crear la ventana de inicio y bienvenida
 (define Menu
