@@ -26,16 +26,17 @@
     (cond ((equal? m 0) (cons elem (cdr lst)))   
           (else
            (cons (car lst) (cambiar-nodo-lista (cdr lst) (- m 1) elem)))))
-
 ;Cambia un nodo en las columnas 
 (define (cambiar-nodo matriz n m elem)
   (cond ((equal? n 0) (cons (cambiar-nodo-lista (car matriz) m elem) (cdr matriz))) ; Columnas
         (else
-         (cons (car matriz) (cambiar-nodo (cdr matriz) (- n 1) m elem)))))
+         (cons (car matriz) (cambiar-nodo (cdr matriz) (- n 1) m elem))))) 
+
 
 
 (define (a)
-  (print-matriz (matriz 3 3)))
+  (print-matriz (matriz 3 4)))
+
 
 
 ;----------------------------## Función que busca la solución general ##----------------------------
@@ -83,7 +84,7 @@
 ; Función que busca un ganador en una fila y devuelve #t o #f
 (define (get_winner_as_row fila)
   
-;  (display "Analyzing row: ") (display fila) (newline)
+  (display "Analyzing row: ") (display fila) (newline)
   
   (if (null? fila)
       #f
@@ -218,7 +219,7 @@
   (append (diagonals-from-row matrix (- (length matrix) 1))
           (diagonals-from-column matrix 0)))
 
-;----------------------------## Pruebas para el algoritmo codicioso ##----------------------------
+;---------------------------------------------Pruebas para el algoritmo codicioso---------------------------------------------
 
 ;----------------------------## Función para encontrar el mejor movimiento ##----------------------------
 
@@ -229,39 +230,32 @@
   (define empty-positions (find-empty-positions matrix))
   
   ; Evalúa el puntaje de un movimiento dado
-  (define (evaluate-move move is-maximizing-player)
-    (define new-matrix (place-move matrix move (if is-maximizing-player player (if (= player 1) 2 1))))
-    (cond
-      ((get_solution new-matrix)
-       ; Si hay un ganador, asigna un puntaje alto o bajo según el jugador
-       (if is-maximizing-player
-           (if (= player 1) 10 -10) ; Maximizar para jugador 1, minimizar para jugador 2
-           (if (= player 1) -10 10))) ; Minimizar para jugador 1, maximizar para jugador 2
-      (else 0))) ; Si no hay ganador, el puntaje es 0
+  (define (evaluate-move move)
+    (define new-matrix (place-move matrix move player))
+    (if (get_solution new-matrix)
+        ; Si el jugador es 1 (X), queremos ganar, asigna un puntaje alto
+        (if (= player 1)
+            10
+            ; Si el jugador es 2 (O), queremos minimizar el puntaje, asigna un puntaje bajo
+            -10)
+        ; Si no hay ganador, el puntaje es 0
+        0))
   
-; Encuentra el movimiento con el mayor puntaje
-(define (find-best-move positions is-maximizing-player)
-  (cond
-    ; Si no hay más posiciones disponibles, retorna #f (sin movimiento)
-    ((null? positions) #f)
-    (else
-     ; Toma el primer movimiento de la lista de posiciones
-     (define move (car positions))
-     ; Llama recursivamente a find-best-move con el resto de las posiciones
-     (define rest (cdr positions))
-     ; Encuentra el mejor movimiento en el resto de las posiciones, alternando el estado de maximización
-     (define best (find-best-move rest (not is-maximizing-player)))
-     ; Evalúa el puntaje del movimiento actual y compáralo con el mejor movimiento encontrado en el resto
-     (if (or (not best)
-             (> (evaluate-move move is-maximizing-player) (evaluate-move best is-maximizing-player)))
-         ; Si el movimiento actual es mejor o no hay mejor movimiento encontrado aún, retorna el movimiento actual
-         move
-         ; De lo contrario, retorna el mejor movimiento encontrado
-         best))))
-
-; Llama a la función para encontrar el mejor movimiento entre todas las posiciones vacías
-; #t indica que estamos maximizando el puntaje del jugador actual
-(find-best-move empty-positions #t))
+  ; Encuentra el movimiento con el mayor puntaje
+  (define (find-best-move positions)
+    (cond
+      ((null? positions) #f)
+      (else
+       (define move (car positions))
+       (define rest (cdr positions))
+       (define best (find-best-move rest))
+       (if (or (not best)
+               (> (evaluate-move move) (evaluate-move best)))
+           move
+           best))))
+  
+  ; Llama a la función para encontrar el mejor movimiento entre todas las posiciones vacías
+  (find-best-move empty-positions))
 
 ; Encuentra todas las posiciones vacías en la matriz
 (define (find-empty-positions matrix)
@@ -288,21 +282,14 @@
 ;---------------------------------------------Pruebas-----------------------------------------------
 ; Ejemplo de uso con el jugador 1 (X)
 (define test-matrix
-  '((2 0 0)
-    (1 2 2)
-    (1 1 2)))
+  '((1 0 0)
+    (0 0 2)
+    (1 0 1)))
 
 (display "Mejor movimiento para jugador 1 (X): ")
 (display (best-move test-matrix 1))
 (newline)
-;(display (car (best-move test-matrix 1)))
-;(display (cadr (best-move test-matrix 1)))
-(display test-matrix)
-;Funcion de prueba para ingresar la mejor opcion del algoritmo GOLOSO
-(define (b)
-  (cambiar-nodo test-matrix (car (best-move test-matrix 1)) (cadr (best-move test-matrix 1)) 1))
 
-;Funcion de prueba para ingresar el valor puesto por el jugador
 ; Ejecución de la prueba
 ;(display "Resultado de recorrer-filas para test-matrix: ")
 ;(display (get_solution test-matrix))
