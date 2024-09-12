@@ -1,6 +1,41 @@
 #lang racket
 
+;   >          <                 (cambiar-nodo '((0 0 0) (0 0 0) (0 0 0) (0 0 0)) 3 1 1)
 
+(provide (all-defined-out))
+
+(define (crear-lista num x)
+  (cond ((<= num 0 ) '())
+        (else (cons x (crear-lista (- num 1) x)))))
+
+(define (matriz n m)
+  (cond ((equal? m 0) "Elige un tamaño de columna válido")
+        ((equal? n 0) "Elige un tamaño de fila válido")
+        (else (append (crear-lista n (crear-lista m 0))))))
+
+(define (print-matriz matriz)
+  (cond
+    ((null? matriz) (newline))
+    (else (begin
+            (display (car matriz))
+            (newline)
+            (print-matriz (cdr matriz))))))
+
+; Cambia un nodo de la lista
+(define (cambiar-nodo-lista lst m elem)  ;Secundaria para manejar primero las filas
+    (cond ((equal? m 0) (cons elem (cdr lst)))   
+          (else
+           (cons (car lst) (cambiar-nodo-lista (cdr lst) (- m 1) elem)))))
+;Cambia un nodo en las columnas 
+(define (cambiar-nodo matriz n m elem)
+  (cond ((equal? n 0) (cons (cambiar-nodo-lista (car matriz) m elem) (cdr matriz))) ; Columnas
+        (else
+         (cons (car matriz) (cambiar-nodo (cdr matriz) (- n 1) m elem))))) 
+
+
+
+(define (a)
+  (print-matriz (matriz 3 4)))
 
 
 
@@ -41,7 +76,6 @@
         (ascending (ascending_diagonals matrix)))
     (or (check-all-columns descendants) ; Verifica diagonales descendentes
         (check-all-columns ascending)))) ; Verifica diagonales ascendentes
-
 
 
 
@@ -185,32 +219,78 @@
   (append (diagonals-from-row matrix (- (length matrix) 1))
           (diagonals-from-column matrix 0)))
 
+;---------------------------------------------Pruebas para el algoritmo codicioso---------------------------------------------
+
+;----------------------------## Función para encontrar el mejor movimiento ##----------------------------
+
+; Encuentra el mejor movimiento utilizando un algoritmo codicioso
+; Encuentra el mejor movimiento utilizando un algoritmo codicioso
+(define (best-move matrix player)
+  ; Encuentra todas las posiciones vacías en la matriz
+  (define empty-positions (find-empty-positions matrix))
+  
+  ; Evalúa el puntaje de un movimiento dado
+  (define (evaluate-move move)
+    (define new-matrix (place-move matrix move player))
+    (if (get_solution new-matrix)
+        ; Si el jugador es 1 (X), queremos ganar, asigna un puntaje alto
+        (if (= player 1)
+            10
+            ; Si el jugador es 2 (O), queremos minimizar el puntaje, asigna un puntaje bajo
+            -10)
+        ; Si no hay ganador, el puntaje es 0
+        0))
+  
+  ; Encuentra el movimiento con el mayor puntaje
+  (define (find-best-move positions)
+    (cond
+      ((null? positions) #f)
+      (else
+       (define move (car positions))
+       (define rest (cdr positions))
+       (define best (find-best-move rest))
+       (if (or (not best)
+               (> (evaluate-move move) (evaluate-move best)))
+           move
+           best))))
+  
+  ; Llama a la función para encontrar el mejor movimiento entre todas las posiciones vacías
+  (find-best-move empty-positions))
+
+; Encuentra todas las posiciones vacías en la matriz
+(define (find-empty-positions matrix)
+  (define (find-positions matrix row col acc)
+    (cond
+      ((>= row (length matrix)) (reverse acc))
+      ((>= col (length (car matrix))) (find-positions matrix (+ row 1) 0 acc))
+      ((= (list-ref (list-ref matrix row) col) 0)
+       (find-positions matrix row (+ col 1) (cons (list row col) acc)))
+      (else (find-positions matrix row (+ col 1) acc))))
+  (find-positions matrix 0 0 '()))
+
+; Coloca un movimiento en la matriz
+(define (place-move matrix move player)
+  ; Reemplaza el valor en la posición especificada con el valor del jugador
+  (define (replace-at matrix row col value)
+    (list-set matrix row
+              (list-set (list-ref matrix row) col value)))
+  
+  ; Llama a la función para reemplazar el valor en la matriz en la posición del movimiento
+  (replace-at matrix (first move) (second move) player))
+
 
 ;---------------------------------------------Pruebas-----------------------------------------------
-; Definición de la matriz de prueba
-(define test-matrix '((0 0 0 0 0 0 0 0 0 0)
-                      (0 1 0 0 0 0 0 0 0 0)
-                      (0 0 2 0 0 0 0 0 0 0)
-                      (0 0 0 1 0 0 0 0 0 0)
-                      (0 0 0 0 0 0 0 0 0 0)
-                      (0 0 0 0 0 0 0 2 0 0)
-                      (0 0 0 0 0 0 0 2 0 0)
-                      (0 0 0 0 0 2 0 2 0 0)
-                      (0 0 0 0 0 0 1 1 0 0)
-                      (0 0 0 0 0 1 0 2 0 0)
-                      (0 0 0 0 0 0 0 0 0 0)))
+; Ejemplo de uso con el jugador 1 (X)
+(define test-matrix
+  '((1 0 0)
+    (0 0 2)
+    (1 0 1)))
+
+(display "Mejor movimiento para jugador 1 (X): ")
+(display (best-move test-matrix 1))
+(newline)
 
 ; Ejecución de la prueba
-(display "Resultado de recorrer-filas para test-matrix: ")
-(display (get_solution test-matrix))
-(newline)
-
-; Definición de una matriz sin ganador
-(define no-winner-matrix '((1 0 1)
-                           (1 0 0)
-                           (0 1 1)))
-
-; Ejecución de la prueba sin ganador
-(display "Resultado de recorrer-filas para no-winner-matrix: ")
-(display (get_solution no-winner-matrix))
-(newline)
+;(display "Resultado de recorrer-filas para test-matrix: ")
+;(display (get_solution test-matrix))
+;(newline)
