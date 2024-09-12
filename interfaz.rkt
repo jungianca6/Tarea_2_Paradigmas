@@ -228,67 +228,57 @@
   panel)
 
 
+
 ;; Funcion que se ejecuta cuando un boton se presiona
 (define (button-grid-callback b e)
+  ; Actualiza la tabla con el nuevo estado según la fila y columna del botón presionado
   (set! tabla (cambiar-nodo tabla (send b get-row) (send b get-col) actual-player))
-
-  (displayln (format "Jugador ~a presiono boton (~a, ~a)" 
-                                      actual-player
-                                      (send b get-row) 
-                                      (send b get-col)))
+  
+  ; Imprime la matriz actualizada
   (print-matriz tabla)
   (update-board-panel)
-  (print (send b get-row))
-  (print (send b get-col))
-  (cond
-    (
-  ;; Juega Greddy
-     (change-player actual-player)
-     (define play-greddy
-       (cond 
-         ((equal? actual-player 2)
-          (greedy tabla actual-player 1))
-         (else
-          (greedy tabla actual-player 2))))
-     (set! tabla (cambiar-nodo tabla (send b get-row) (send b get-col) 1))
+  (get_solution tabla)
   
-     (displayln (format "El Goloso usa ficha ~a puso en col ~a" 
-                        actual-player
-                        play-greddy))
-     (print-matriz tabla)
-     (update-board-panel)
-     ;; Sede turno player
-     (change-player actual-player)
-     )
-    )
-  )
+ ;; Lógica del jugador "Greedy"
+  (change-player actual-player)
   
-;; Actualiza como se ve la matriz de botones
+  (define play-greedy (best-move tabla 2)) ; Calcula el mejor movimiento para el jugador greedy
+  (define row (car play-greedy))   ;Los separa en 2 numeros
+  (define col (cadr play-greedy))  
+
+; Actualiza la tabla con el movimiento del jugador "Greedy"
+  (set! tabla (cambiar-nodo tabla row col 2))
+  ; Imprime la matriz actualizada después del movimiento del jugador "Greedy"
+  (print-matriz tabla)
+  (update-board-panel)
+  (get_solution tabla)
+  
+  (change-player actual-player))
+
+;; Definir los símbolos para el jugador y el jugador "Greedy"
+(define player-symbol "O")
+(define greedy-symbol "X")
+
+;; Actualiza cómo se ve la matriz de botones
 (define (update-board-panel)
   (define (update-board-panel-helper i j)
-    (cond
-      [(>= i (length tabla)) #f] ; Caso base: Si i es mayor que la longitud de la lista, termina la recursión
-      [(>= j (length (list-ref tabla i))) ; Si j es mayor que la longitud de la sublista i-ésima, pasa a la siguiente sublista
-        (update-board-panel-helper (+ i 1) 0)]
-      [else ; Si no, actualiza el botón correspondiente y pasa al siguiente elemento de la sublista
-        (define button (list-ref (list-ref buttons-panel i) j))
-        (cond
-          [(equal? 0 (list-ref (list-ref tabla i) j))
-            (send button set-label "-")
-            (send button enable #t)]
-          [(equal? 1 (list-ref (list-ref tabla i) j))
-            (send button set-label "1")
-            (send button enable #f)]
-          [(equal? 2 (list-ref (list-ref tabla i) j))
-            (send button set-label "2")
-            (send button enable #f)]
-        )
-        (update-board-panel-helper i (+ j 1))
-      ]
-    )
-  )
-  (update-board-panel-helper 0 0)
-)
+    (cond [(>= i (length tabla)) #f]       ;Si i es mayor que la longitud de la lista, termina la recursión
+          [(>= j (length (list-ref tabla i)))     ; Si j es mayor que la longitud de la sublista i-ésima, pasa a la siguiente sublista
+           (update-board-panel-helper (+ i 1) 0)]
+          [else                  ; Si no, actualiza el botón correspondiente y pasa al siguiente elemento de la sublista
+           (define button (list-ref (list-ref buttons-panel i) j))
+           (cond
+             [(equal? 0 (list-ref (list-ref tabla i) j))
+              (send button set-label "-")
+              (send button enable #t)]
+             [(equal? 1 (list-ref (list-ref tabla i) j))
+              (send button set-label player-symbol)    ; Cambia el símbolo del jugador a "O"
+              (send button enable #f)]
+             [(equal? 2 (list-ref (list-ref tabla i) j))
+              (send button set-label greedy-symbol)    ; Cambia el símbolo del jugador greedy a "X"
+              (send button enable #f)])
+           (update-board-panel-helper i (+ j 1))]))
+  (update-board-panel-helper 0 0))
 
 
 ; Centrar la ventana1

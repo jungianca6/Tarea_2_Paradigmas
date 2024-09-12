@@ -8,6 +8,14 @@
   (cond ((<= num 0 ) '())
         (else (cons x (crear-lista (- num 1) x)))))
 
+(define (get-row row matriz)
+  (list-ref matriz row))
+
+(define (get-col col matriz)
+  (cond ((null? matriz) '())
+        (else (cons (list-ref (car matriz) col)
+                    (get-col col (cdr matriz))))))
+
 (define (matriz n m)
   (cond ((equal? m 0) "Elige un tamaño de columna válido")
         ((equal? n 0) "Elige un tamaño de fila válido")
@@ -26,17 +34,11 @@
     (cond ((equal? m 0) (cons elem (cdr lst)))   
           (else
            (cons (car lst) (cambiar-nodo-lista (cdr lst) (- m 1) elem)))))
-
 ;Cambia un nodo en las columnas 
 (define (cambiar-nodo matriz n m elem)
   (cond ((equal? n 0) (cons (cambiar-nodo-lista (car matriz) m elem) (cdr matriz))) ; Columnas
         (else
-         (cons (car matriz) (cambiar-nodo (cdr matriz) (- n 1) m elem)))))
-
-
-(define (a)
-  (print-matriz (matriz 3 3)))
-
+         (cons (car matriz) (cambiar-nodo (cdr matriz) (- n 1) m elem))))) 
 
 ;----------------------------## Función que busca la solución general ##----------------------------
 
@@ -292,12 +294,13 @@
     (1 2 2)
     (1 1 2)))
 
+(display (get_solution test-matrix))
 (display "Mejor movimiento para jugador 1 (X): ")
 (display (best-move test-matrix 1))
 (newline)
 ;(display (car (best-move test-matrix 1)))
 ;(display (cadr (best-move test-matrix 1)))
-(display test-matrix)
+(display (car (best-move test-matrix 2)))
 ;Funcion de prueba para ingresar la mejor opcion del algoritmo GOLOSO
 (define (b)
   (cambiar-nodo test-matrix (car (best-move test-matrix 1)) (cadr (best-move test-matrix 1)) 1))
