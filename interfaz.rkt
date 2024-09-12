@@ -229,31 +229,40 @@
 
 
 
-;; Funcion que se ejecuta cuando un boton se presiona
+;; Función que se ejecuta cuando un botón se presiona
 (define (button-grid-callback b e)
   ; Actualiza la tabla con el nuevo estado según la fila y columna del botón presionado
   (set! tabla (cambiar-nodo tabla (send b get-row) (send b get-col) actual-player))
   
   ; Imprime la matriz actualizada
-  (print-matriz tabla)
   (update-board-panel)
-  (get_solution tabla)
   
- ;; Lógica del jugador "Greedy"
-  (change-player actual-player)
-  
-  (define play-greedy (best-move tabla 2)) ; Calcula el mejor movimiento para el jugador greedy
-  (define row (car play-greedy))   ;Los separa en 2 numeros
-  (define col (cadr play-greedy))  
-
-; Actualiza la tabla con el movimiento del jugador "Greedy"
-  (set! tabla (cambiar-nodo tabla row col 2))
-  ; Imprime la matriz actualizada después del movimiento del jugador "Greedy"
-  (print-matriz tabla)
-  (update-board-panel)
-  (get_solution tabla)
-  
-  (change-player actual-player))
+  ; Verifica si el jugador ha ganado después de su movimiento
+  (if (get_solution tabla)
+      (begin
+        (display "¡Has ganado!")
+        (exit)) 
+      (begin
+        ;; Si no hay ganador, procede con el turno del jugador "Greedy"
+        (change-player actual-player)
+        
+        ;; Calcula el mejor movimiento para el jugador "Greedy" usando let para definir las variables locales
+        (let* ((play-greedy (best-move tabla 2))
+               (row (car play-greedy))
+               (col (cadr play-greedy)))
+          
+          ;; Actualiza la tabla con el movimiento del jugador "Greedy"
+          (set! tabla (cambiar-nodo tabla row col 2))
+          
+          ;; Imprime la matriz actualizada después del movimiento del jugador "Greedy"
+          (update-board-panel)
+          
+          ;; Verifica si el jugador "Greedy" ha ganado después de su movimiento
+          (if (get_solution tabla)
+              (begin
+                (display "¡El jugador 'Greedy' ha ganado!")
+                (exit))
+              (change-player actual-player))))))  ; Cambia el turno de nuevo si no hay ganador
 
 ;; Definir los símbolos para el jugador y el jugador "Greedy"
 (define player-symbol "O")

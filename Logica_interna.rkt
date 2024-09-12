@@ -8,14 +8,6 @@
   (cond ((<= num 0 ) '())
         (else (cons x (crear-lista (- num 1) x)))))
 
-(define (get-row row matriz)
-  (list-ref matriz row))
-
-(define (get-col col matriz)
-  (cond ((null? matriz) '())
-        (else (cons (list-ref (car matriz) col)
-                    (get-col col (cdr matriz))))))
-
 (define (matriz n m)
   (cond ((equal? m 0) "Elige un tamaño de columna válido")
         ((equal? n 0) "Elige un tamaño de fila válido")
