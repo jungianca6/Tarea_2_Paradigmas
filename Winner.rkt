@@ -189,29 +189,38 @@
 ;----------------------------## Función para encontrar el mejor movimiento ##----------------------------
 
 ; Encuentra el mejor movimiento utilizando un algoritmo codicioso
+; Encuentra el mejor movimiento utilizando un algoritmo codicioso
 (define (best-move matrix player)
-  (let ((empty-positions (find-empty-positions matrix)))
-    (define (evaluate-move move)
-      (let ((new-matrix (place-move matrix move player)))
-        (if (get_solution new-matrix)
-            (if (= player 1)  ; Si el jugador es 1 (X), queremos ganar
-                10
-                -10)  ; Si el jugador es 2 (O), queremos minimizar el puntaje
-            0)))  ; Si no hay ganador, el puntaje es 0
-    
-    ; Encuentra el movimiento con el mayor puntaje
-    (define (find-best-move positions)
-      (if (null? positions)
-          #f
-          (let ((move (car positions))
-                (rest (cdr positions)))
-            (let ((best (find-best-move rest)))
-              (if (or (not best)
-                      (> (evaluate-move move) (evaluate-move best)))
-                  move
-                  best)))))
-    
-    (find-best-move empty-positions)))
+  ; Encuentra todas las posiciones vacías en la matriz
+  (define empty-positions (find-empty-positions matrix))
+  
+  ; Evalúa el puntaje de un movimiento dado
+  (define (evaluate-move move)
+    (define new-matrix (place-move matrix move player))
+    (if (get_solution new-matrix)
+        ; Si el jugador es 1 (X), queremos ganar, asigna un puntaje alto
+        (if (= player 1)
+            10
+            ; Si el jugador es 2 (O), queremos minimizar el puntaje, asigna un puntaje bajo
+            -10)
+        ; Si no hay ganador, el puntaje es 0
+        0))
+  
+  ; Encuentra el movimiento con el mayor puntaje
+  (define (find-best-move positions)
+    (cond
+      ((null? positions) #f)
+      (else
+       (define move (car positions))
+       (define rest (cdr positions))
+       (define best (find-best-move rest))
+       (if (or (not best)
+               (> (evaluate-move move) (evaluate-move best)))
+           move
+           best))))
+  
+  ; Llama a la función para encontrar el mejor movimiento entre todas las posiciones vacías
+  (find-best-move empty-positions))
 
 ; Encuentra todas las posiciones vacías en la matriz
 (define (find-empty-positions matrix)
@@ -226,25 +235,21 @@
 
 ; Coloca un movimiento en la matriz
 (define (place-move matrix move player)
+  ; Reemplaza el valor en la posición especificada con el valor del jugador
   (define (replace-at matrix row col value)
-    (let ((row-list (list-ref matrix row)))
-      (list-set matrix row (list-set row-list col value))))
+    (list-set matrix row
+              (list-set (list-ref matrix row) col value)))
+  
+  ; Llama a la función para reemplazar el valor en la matriz en la posición del movimiento
   (replace-at matrix (first move) (second move) player))
 
 
 ;---------------------------------------------Pruebas-----------------------------------------------
 ; Ejemplo de uso con el jugador 1 (X)
 (define test-matrix
-  '((0 0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0 0)
-    (0 0 0 1 0 0 0 0 0 0)
-    (0 0 0 0 1 0 0 0 0 0)
-    (0 0 0 0 0 1 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0 0)))
+  '((1 0 0)
+    (0 2 2)
+    (1 1 1)))
 
 (display "Mejor movimiento para jugador 1 (X): ")
 (display (best-move test-matrix 1))
