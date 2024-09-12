@@ -44,7 +44,6 @@
 
 
 
-
 ;----------------------------## Función que busca la solución como una fila ##----------------------------
 
 ; Función que busca un ganador en una fila y devuelve #t o #f
@@ -185,32 +184,76 @@
   (append (diagonals-from-row matrix (- (length matrix) 1))
           (diagonals-from-column matrix 0)))
 
+;---------------------------------------------Pruebas para el algoritmo codicioso---------------------------------------------
+
+;----------------------------## Función para encontrar el mejor movimiento ##----------------------------
+
+; Encuentra el mejor movimiento utilizando un algoritmo codicioso
+(define (best-move matrix player)
+  (let ((empty-positions (find-empty-positions matrix)))
+    (define (evaluate-move move)
+      (let ((new-matrix (place-move matrix move player)))
+        (if (get_solution new-matrix)
+            (if (= player 1)  ; Si el jugador es 1 (X), queremos ganar
+                10
+                -10)  ; Si el jugador es 2 (O), queremos minimizar el puntaje
+            0)))  ; Si no hay ganador, el puntaje es 0
+    
+    ; Encuentra el movimiento con el mayor puntaje
+    (define (find-best-move positions)
+      (if (null? positions)
+          #f
+          (let ((move (car positions))
+                (rest (cdr positions)))
+            (let ((best (find-best-move rest)))
+              (if (or (not best)
+                      (> (evaluate-move move) (evaluate-move best)))
+                  move
+                  best)))))
+    
+    (find-best-move empty-positions)))
+
+; Encuentra todas las posiciones vacías en la matriz
+(define (find-empty-positions matrix)
+  (define (find-positions matrix row col acc)
+    (cond
+      ((>= row (length matrix)) (reverse acc))
+      ((>= col (length (car matrix))) (find-positions matrix (+ row 1) 0 acc))
+      ((= (list-ref (list-ref matrix row) col) 0)
+       (find-positions matrix row (+ col 1) (cons (list row col) acc)))
+      (else (find-positions matrix row (+ col 1) acc))))
+  (find-positions matrix 0 0 '()))
+
+; Coloca un movimiento en la matriz
+(define (place-move matrix move player)
+  (define (replace-at matrix row col value)
+    (let ((row-list (list-ref matrix row)))
+      (list-set matrix row (list-set row-list col value))))
+  (replace-at matrix (first move) (second move) player))
+
 
 ;---------------------------------------------Pruebas-----------------------------------------------
-; Definición de la matriz de prueba
-(define test-matrix '((0 0 0 0 0 0 0 0 0 0)
-                      (0 1 0 0 0 0 0 0 0 0)
-                      (0 0 2 0 0 0 0 0 0 0)
-                      (0 0 0 1 0 0 0 0 0 0)
-                      (0 0 0 0 0 0 0 0 0 0)
-                      (0 0 0 0 0 0 0 2 0 0)
-                      (0 0 0 0 0 0 0 2 0 0)
-                      (0 0 0 0 0 2 0 2 0 0)
-                      (0 0 0 0 0 0 1 1 0 0)
-                      (0 0 0 0 0 1 0 2 0 0)
-                      (0 0 0 0 0 0 0 0 0 0)))
+; Ejemplo de uso con el jugador 1 (X)
+(define test-matrix
+  '((0 0 0 0 0 0 0 0 0 0)
+    (0 0 0 0 0 0 0 0 0 0)
+    (0 0 0 0 0 0 0 0 0 0)
+    (0 0 0 1 0 0 0 0 0 0)
+    (0 0 0 0 1 0 0 0 0 0)
+    (0 0 0 0 0 1 0 0 0 0)
+    (0 0 0 0 0 0 0 0 0 0)
+    (0 0 0 0 0 0 0 0 0 0)
+    (0 0 0 0 0 0 0 0 0 0)
+    (0 0 0 0 0 0 0 0 0 0)))
+
+(display "Mejor movimiento para jugador 1 (X): ")
+(display (best-move test-matrix 1))
+(newline)
 
 ; Ejecución de la prueba
-(display "Resultado de recorrer-filas para test-matrix: ")
-(display (get_solution test-matrix))
-(newline)
+;(display "Resultado de recorrer-filas para test-matrix: ")
+;(display (get_solution test-matrix))
+;(newline)
 
-; Definición de una matriz sin ganador
-(define no-winner-matrix '((1 0 1)
-                           (1 0 0)
-                           (0 1 1)))
 
-; Ejecución de la prueba sin ganador
-(display "Resultado de recorrer-filas para no-winner-matrix: ")
-(display (get_solution no-winner-matrix))
-(newline)
+
