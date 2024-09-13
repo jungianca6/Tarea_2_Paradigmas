@@ -63,12 +63,9 @@
         (else
          (check-rows (cdr matrix))))) ; Recurre a las siguientes filas
 
-; Función que verifica si hay un ganador en alguna diagonal
 (define (check-diagonals matrix)
-  (let ((descendants (descending_diagonals matrix))
-        (ascending (ascending_diagonals matrix)))
-    (or (check-all-columns descendants) ; Verifica diagonales descendentes
-        (check-all-columns ascending)))) ; Verifica diagonales ascendentes
+  (or (check-all-columns (descending_diagonals matrix)) ; Verifica diagonales descendentes
+      (check-all-columns (ascending_diagonals matrix)))) ; Verifica diagonales ascendentes
 
 
 
