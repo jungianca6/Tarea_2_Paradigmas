@@ -217,7 +217,6 @@
 ;----------------------------## Función para encontrar el mejor movimiento ##----------------------------
 
 ; Encuentra el mejor movimiento utilizando un algoritmo codicioso
-; Encuentra el mejor movimiento utilizando un algoritmo codicioso
 (define (best-move matrix player)
   ; Encuentra todas las posiciones vacías en la matriz
   (define empty-positions (find-empty-positions matrix))
@@ -229,8 +228,8 @@
       ((get_solution new-matrix)
        ; Si hay un ganador, asigna un puntaje alto o bajo según el jugador
        (if is-maximizing-player
-           (if (= player 1) 10 -10) ; Maximizar para jugador 1, minimizar para jugador 2
-           (if (= player 1) -10 10))) ; Minimizar para jugador 1, maximizar para jugador 2
+           (if (= player 1) 100 50) ; Maximizar para jugador 1, minimizar para jugador 2
+           (if (= player 1) 50 100))) ; Minimizar para jugador 1, maximizar para jugador 2
       (else 0))) ; Si no hay ganador, el puntaje es 0
   
 ; Encuentra el movimiento con el mayor puntaje
