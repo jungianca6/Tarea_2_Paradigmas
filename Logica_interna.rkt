@@ -216,7 +216,7 @@
 ; Encuentra el mejor movimiento utilizando un algoritmo codicioso
 (define (best-move matrix player)
   ; Encuentra todas las posiciones vacías en la matriz
-  (define empty-positions (find-empty-positions matrix))
+  (define empty-positions (find-empty-positions matrix)) ; 4.2.1 Conjunto de candidatos
   
   ; Evalúa el puntaje de un movimiento dado
   (define (evaluate-move move is-maximizing-player)
@@ -227,42 +227,42 @@
        (if is-maximizing-player
            (if (= player 1) 100 50) ; Maximizar para jugador 1, minimizar para jugador 2
            (if (= player 1) 50 100))) ; Minimizar para jugador 1, maximizar para jugador 2
-      (else 0))) ; Si no hay ganador, el puntaje es 0
+      (else 0))) ; Si no hay ganador, el puntaje es 0 ; 4.2.4 Función objetivo
   
-; Encuentra el movimiento con el mayor puntaje
-(define (find-best-move positions is-maximizing-player)
-  (cond
-    ; Si no hay más posiciones disponibles, retorna #f (sin movimiento)
-    ((null? positions) #f)
-    (else
-     ; Toma el primer movimiento de la lista de posiciones
-     (define move (car positions))
-     ; Llama recursivamente a find-best-move con el resto de las posiciones
-     (define rest (cdr positions))
-     ; Encuentra el mejor movimiento en el resto de las posiciones, alternando el estado de maximización
-     (define best (find-best-move rest (not is-maximizing-player)))
-     ; Evalúa el puntaje del movimiento actual y compáralo con el mejor movimiento encontrado en el resto
-     (if (or (not best)
-             (> (evaluate-move move is-maximizing-player) (evaluate-move best is-maximizing-player)))
-         ; Si el movimiento actual es mejor o no hay mejor movimiento encontrado aún, retorna el movimiento actual
-         move
-         ; De lo contrario, retorna el mejor movimiento encontrado
-         best))))
-
-; Llama a la función para encontrar el mejor movimiento entre todas las posiciones vacías
-; #t indica que estamos maximizando el puntaje del jugador actual
-(find-best-move empty-positions #t))
+  ; Encuentra el movimiento con el mayor puntaje
+  (define (find-best-move positions is-maximizing-player)
+    (cond
+      ; Si no hay más posiciones disponibles, retorna #f (sin movimiento)
+      ((null? positions) #f) ; 4.2.3 Función de viabilidad
+      (else
+       ; Toma el primer movimiento de la lista de posiciones
+       (define move (car positions))
+       ; Llama recursivamente a find-best-move con el resto de las posiciones
+       (define rest (cdr positions))
+       ; Encuentra el mejor movimiento en el resto de las posiciones, alternando el estado de maximización
+       (define best (find-best-move rest (not is-maximizing-player)))
+       ; Evalúa el puntaje del movimiento actual y compáralo con el mejor movimiento encontrado en el resto
+       (if (or (not best)
+               (> (evaluate-move move is-maximizing-player) (evaluate-move best is-maximizing-player)))
+           ; Si el movimiento actual es mejor o no hay mejor movimiento encontrado aún, retorna el movimiento actual
+           move
+           ; De lo contrario, retorna el mejor movimiento encontrado
+           best)))) ; 4.2.2 Función de selección
+  
+  ; Llama a la función para encontrar el mejor movimiento entre todas las posiciones vacías
+  ; #t indica que estamos maximizando el puntaje del jugador actual
+  (find-best-move empty-positions #t)) ; 4.2.5 Función de solución
 
 ; Encuentra todas las posiciones vacías en la matriz
 (define (find-empty-positions matrix)
   (define (find-positions matrix row col acc)
     (cond
-      ((>= row (length matrix)) (reverse acc))
-      ((>= col (length (car matrix))) (find-positions matrix (+ row 1) 0 acc))
+      ((>= row (length matrix)) (reverse acc)) ; Si i es mayor que la longitud de la lista, termina la recursión
+      ((>= col (length (car matrix))) (find-positions matrix (+ row 1) 0 acc)) ; Si j es mayor que la longitud de la sublista i-ésima, pasa a la siguiente sublista
       ((= (list-ref (list-ref matrix row) col) 0)
-       (find-positions matrix row (+ col 1) (cons (list row col) acc)))
-      (else (find-positions matrix row (+ col 1) acc))))
-  (find-positions matrix 0 0 '()))
+       (find-positions matrix row (+ col 1) (cons (list row col) acc))) ; Si el valor es 0 (vacío), añade la posición a la lista de posiciones vacías
+      (else (find-positions matrix row (+ col 1) acc)))) ; Si no, continúa con la siguiente posición
+  (find-positions matrix 0 0 '())) ; 4.2.1 Conjunto de candidatos
 
 ; Coloca un movimiento en la matriz
 (define (place-move matrix move player)
@@ -273,6 +273,7 @@
   
   ; Llama a la función para reemplazar el valor en la matriz en la posición del movimiento
   (replace-at matrix (first move) (second move) player))
+
 
 
 ;---------------------------------------------Pruebas-----------------------------------------------
