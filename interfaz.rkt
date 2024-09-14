@@ -10,6 +10,18 @@
        [width 1000]
        [height 800]))
 
+; Venatana emergente cuando jugador gana
+(define FinalJugador
+  (new frame% [label "Fin del Juego"]
+                        [width 200]
+                        [height 200]))
+
+; Ventana emergente cuando sistema gana
+(define FinalPC
+  (new frame% [label "Fin del Juego"]
+                        [width 200]
+                        [height 200]))
+
 ; Crear una caja para guardar la etiqueta de bienvenida
 (define box1
   (new horizontal-panel%
@@ -45,10 +57,24 @@
        [alignment '(center top)]  ; Centrar en la parte de arriba
        [stretchable-height #f]))
 
+; Panel del mensaje de victoria cuando jugador gana
+(define Jugador
+  (new horizontal-panel%
+       [parent FinalJugador]
+       [alignment '(center top)]  ; Centrar en la parte de arriba
+       [stretchable-height #f]))
+
+; Panel del mensaje de victoria cuando sistema gana
+(define PC
+  (new horizontal-panel%
+       [parent FinalPC]
+       [alignment '(center top)]  ; Centrar en la parte de arriba
+       [stretchable-height #f]))
+
 ;"""""""""""""""""""""""""Mostrar mensajes en pantalla""""""""""""""""""""""""""""""
 
 ; Mostrar mensaje de Bienvenida
-(define msg-area (new message%
+(define Bienvenida (new message%
                       [parent box1]
                       [vert-margin 100]
                       [label "  Has iniciado el juego Tic Tac Toe "]
@@ -57,23 +83,43 @@
                       [auto-resize #t]))
 
 ; Mostrar mensaje de elegir tamaño de matriz
-(define msg-area2 (new message%
+(define matrizSize (new message%
                       [parent box2]
                       [vert-margin 30]
-                      [label "  Ingrese el tamaño del tablero "]
+                      [label "  Ingrese el tamaño del tablero   "]
                       [min-width 250]
                       [font (make-object font% 18.0 'system)]
                       [auto-resize #t]))
 
-(define entradaColumnas (new text-field%
+; Mostrar mensaje de victoria del jugador
+(define playerWIN (new message%
+                      [parent Jugador]
+                      [vert-margin 30]
+                      [label "  ¡El jugador ganó!   "]
+                      [min-width 250]
+                      [font (make-object font% 18.0 'system)]
+                      [auto-resize #t]))
+
+; Mostrar mensaje de victoria del sistema
+(define sistemaWIN (new message%
+                      [parent PC]
+                      [vert-margin 30]
+                      [label "  ¡El sistema ganó!   "]
+                      [min-width 250]
+                      [font (make-object font% 18.0 'system)]
+                      [auto-resize #t]))
+
+; Espacio para ingresar el número de columnas
+(define nColumnas (new text-field%
                        [label "  Columnas "]
                        [parent box3]
                        [min-width 100]  ; Ancho fijo para la caja de texto
                        [min-height 30]  ; Altura fija para la caja de texto
                        [font (make-object font% 14.0 'system)])) ; Tamaño del texto
 
-(define entradaFilas (new text-field%
-                       [label "  Filas  "]
+; Espacio para ingresar el número de filas
+(define nFilas (new text-field%
+                       [label "        Filas  "]
                        [parent box3]
                        [min-width 100]  ; Ancho fijo para la caja de texto
                        [min-height 30]  ; Altura fija para la caja de texto
@@ -110,8 +156,8 @@
 
 ; Función que se llama cuando se presiona el botón
 (define (llamadaBoton button event)
-  (let ((numColumnas (string->number (send entradaColumnas get-value)))
-        (numFilas (string->number (send entradaFilas get-value))))
+  (let ((numColumnas (string->number (send nColumnas get-value)))
+        (numFilas (string->number (send nFilas get-value))))
     
     ; Actualizar mensaje de error para columnas
     (set! mensaje-error-columnas
@@ -241,7 +287,8 @@
   (if (get_solution tabla)
       (begin
         (display "¡Has ganado!")
-        (exit)) 
+        (send Matriz show #f)  ; Ocultar ventana de juego
+        (send FinalJugador show #t))
       (begin
         ;; Si no hay ganador, procede con el turno del jugador "Greedy"
         (change-player actual-player)
@@ -260,8 +307,9 @@
           ;; Verifica si el jugador "Greedy" ha ganado después de su movimiento
           (if (get_solution tabla)
               (begin
-                (display "¡El jugador 'Greedy' ha ganado!")
-                (exit))
+                (display "¡El sistema ha ganado!")
+                (send Matriz show #f)  ; Ocultar ventana de juego
+                (send FinalPC show #t))
               (change-player actual-player))))))  ; Cambia el turno de nuevo si no hay ganador
 
 ;; Definir los símbolos para el jugador y el jugador "Greedy"
@@ -290,9 +338,11 @@
   (update-board-panel-helper 0 0))
 
 
-; Centrar la ventana1
+; Centrar las ventanas
 (send Menu center)
 (send Matriz center)
+(send FinalJugador center)
+(send FinalPC center)
 
-; Mostrar la ventana
+; Mostrar la ventana del menú
 (send Menu show #t)
