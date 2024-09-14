@@ -51,7 +51,7 @@
 (define msg-area (new message%
                       [parent box1]
                       [vert-margin 100]
-                      [label "  Has iniciado el juego Tic Tac Toe"]
+                      [label "  Has iniciado el juego Tic Tac Toe "]
                       [min-width 250]
                       [font (make-object font% 25.0 'system)]
                       [auto-resize #t]))
@@ -60,20 +60,20 @@
 (define msg-area2 (new message%
                       [parent box2]
                       [vert-margin 30]
-                      [label "  Ingrese el tamaño del tablero"]
+                      [label "  Ingrese el tamaño del tablero "]
                       [min-width 250]
                       [font (make-object font% 18.0 'system)]
                       [auto-resize #t]))
 
 (define entradaColumnas (new text-field%
-                       [label "Columnas"]
+                       [label "  Columnas "]
                        [parent box3]
                        [min-width 100]  ; Ancho fijo para la caja de texto
                        [min-height 30]  ; Altura fija para la caja de texto
                        [font (make-object font% 14.0 'system)])) ; Tamaño del texto
 
 (define entradaFilas (new text-field%
-                       [label "     Filas"]
+                       [label "  Filas  "]
                        [parent box3]
                        [min-width 100]  ; Ancho fijo para la caja de texto
                        [min-height 30]  ; Altura fija para la caja de texto
@@ -118,10 +118,10 @@
       (cond
         [(or (not numColumnas) (< numColumnas 3))
          (actualizar-mensaje-error box-error-columnas mensaje-error-columnas 
-                                   "No se puede crear un tablero de menos de 3 columnas")]
+                                   "No se puede crear un tablero de menos de 3 columnas     ")]
         [(> numColumnas 10)
          (actualizar-mensaje-error box-error-columnas mensaje-error-columnas 
-                                   "No se puede crear un tablero de más de 10 columnas")]
+                                   "No se puede crear un tablero de más de 10 columnas    ")]
         [else 
          (when mensaje-error-columnas
            (send mensaje-error-columnas show #f))
@@ -132,10 +132,10 @@
       (cond
         [(or (not numFilas) (< numFilas 3))
          (actualizar-mensaje-error box-error-filas mensaje-error-filas 
-                                   "No se puede crear un tablero de menos de 3 filas")]
+                                   "No se puede crear un tablero de menos de 3 filas     ")]
         [(> numFilas 10)
          (actualizar-mensaje-error box-error-filas mensaje-error-filas 
-                                   "No se puede crear un tablero de más de 10 filas")]
+                                   "No se puede crear un tablero de más de 10 filas     ")]
         [else 
          (when mensaje-error-filas
            (send mensaje-error-filas show #f))
@@ -265,8 +265,8 @@
               (change-player actual-player))))))  ; Cambia el turno de nuevo si no hay ganador
 
 ;; Definir los símbolos para el jugador y el jugador "Greedy"
-(define player-symbol "O")
-(define greedy-symbol "X")
+(define player-symbol "X")
+(define greedy-symbol "O")
 
 ;; Actualiza cómo se ve la matriz de botones
 (define (update-board-panel)
